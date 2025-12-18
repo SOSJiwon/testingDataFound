@@ -11,6 +11,22 @@ body {
   height: 100vh;
   background: #ffffff;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  overflow: hidden;
+  /* 부드러운 transition 제거 */
+}
+
+/* 오염된 배경 - 즉각적으로 변경 */
+body.corrupted-bg {
+  background-color: #0a0000;
+  /* 순간적인 색상 반전 효과로 충격 부여 */
+  filter: invert(1); 
+  animation: glitch-flash 0.2s steps(2) forwards;
+}
+
+@keyframes glitch-flash {
+  0% { filter: invert(1); }
+  50% { filter: invert(0); }
+  100% { filter: invert(0); }
 }
 
 .center {
@@ -25,6 +41,10 @@ body {
   font-weight: 700;
   font-size: 18px;
   letter-spacing: 0.6px;
+}
+
+body.corrupted-bg .status-text {
+  color: #4a0000;
 }
 
 .hidden { display: none; }
@@ -111,9 +131,7 @@ body {
   transition: transform 0.4s ease;
 }
 
-#emergencyPopup.show {
-  transform: translateY(0);
-}
+#emergencyPopup.show { transform: translateY(0); }
 
 .em-title {
   flex-shrink: 0;
@@ -125,15 +143,17 @@ body {
 .marquee {
   overflow: hidden;
   width: 100%;
+  display: flex;
+  position: relative;
 }
 
-.marquee span {
+#alertText {
   display: inline-block;
   white-space: nowrap;
   padding-left: 100%;
+  will-change: transform;
 }
 
-/* 스크롤 */
 .scroll {
   animation: marquee 30s linear infinite;
 }
@@ -143,15 +163,14 @@ body {
   to   { transform: translateX(-100%); }
 }
 
-/* 깜박임 */
 .blink {
-  animation: blink 0.15s steps(2) 3;
+  animation: blink 0.05s steps(2) infinite; /* 더 빠르게 깜빡임 */
 }
 
 @keyframes blink {
-  0% { opacity: 1; }
-  50% { opacity: 0; }
-  100% { opacity: 1; }
+  0% { opacity: 1; visibility: visible; }
+  50% { opacity: 0; visibility: hidden; }
+  100% { opacity: 1; visibility: visible; }
 }
 </style>
 </head>
@@ -185,76 +204,73 @@ body {
 </div>
 
 <script>
-/* 날짜 */
+const alertText = document.getElementById("alertText");
+const topPopupText = document.getElementById("topPopupText");
+const loadingScreen = document.getElementById("loadingScreen");
+const emptyScreen = document.getElementById("emptyScreen");
+const noData = document.getElementById("noData");
+const topPopup = document.getElementById("topPopup");
+const closeBtn = document.getElementById("closeBtn");
+const emergencyPopup = document.getElementById("emergencyPopup");
+
+const normalText = `귀하는 현재 초자연 재난에 휘말린 상태입니다. 하단의 번호로 연락해 신속히 구조를 요청하고 안전 수칙을 필히 따르십시오. 📞1717-8282-42 ▲안전 수칙▲눈을 마주치지 마세요.▲주위의 숨을 곳을 찾으세요.▲요원이 도착할 때까지 아무 소리도 내지 마세요. [초자연재난관리국]`;
+
+const corruptedText = `귀하는 현재 초자연 재난에 휘말린 상태입니다. 하단의 번호로 연락해 신속히 구조를 요청하고 안전 수칙을 필히 따르십시오. 📞1717-8282-42 ▲안전 수칙▲그분과 눈을 마주치세요.▲지금 당장 ■■■만을 위한 신도가 되세요!▲교주님행복부디건강저희를사랑내세의우정구원아래지옥번죄하시고파괴더욱섬멸아름다운망각세계로구원보내과거중생을생존불우한소망삶에서기쁨구원하소서찬미위해지금바로찬양하세요! [초자연재난관리국]`;
+
 const now = new Date();
-const date = now.toLocaleDateString("ko-KR");
-const day = now.toLocaleDateString("ko-KR", { weekday: "short" });
+topPopupText.innerText = `${now.toLocaleDateString("ko-KR")} (${now.toLocaleDateString("ko-KR", { weekday: "short" })}) 🚨현재 서울 인근에서 발생한 다수의 트래픽 오류로 인한 재난피해가 이어지고 있으니 근방 현장 요원들은 본부로 복귀 바랍니다. [초자연재난관리국]`;
 
-topPopupText.innerText =
-`${date} (${day}) 🚨현재 서울 인근에서 발생한 다수의 트래픽 오류로 인한 재난피해가 이어지고 있으니 근방 현장 요원들은 본부로 복귀 바랍니다. [초자연재난관리국]`;
+alertText.textContent = normalText;
 
-/* 초기 흐름 */
 setTimeout(() => {
   loadingScreen.classList.add("hidden");
   emptyScreen.classList.remove("hidden");
-
   setTimeout(() => {
     topPopup.classList.add("show");
     closeBtn.classList.add("show");
   }, 3000);
 }, 2200);
 
-/* 1차 팝업 닫기 */
 closeBtn.addEventListener("click", () => {
   topPopup.classList.remove("show");
   closeBtn.classList.remove("show");
-
   setTimeout(() => {
     emptyScreen.classList.add("hidden");
     noData.classList.remove("hidden");
-
     setTimeout(() => {
       emergencyPopup.classList.add("show");
-
-      setTimeout(() => {
-        alertText.classList.add("scroll");
-      }, 1000);
-
+      setTimeout(() => { alertText.classList.add("scroll"); }, 1000);
     }, 1000);
   }, 2000);
 });
 
-/* 텍스트 */
-const normalText =
-`귀하는 현재 초자연 재난에 휘말린 상태입니다. 하단의 번호로 연락해 신속히 구조를 요청하고 안전 수칙을 필히 따르십시오. 📞1717-8282-42 ▲안전 수칙▲눈을 마주치지 마세요.▲주위의 숨을 곳을 찾으세요.▲요원이 도착할 때까지 아무 소리도 내지 마세요. [초자연재난관리국]`;
-
-const corruptedText =
-`귀하는 현재 초자연 재난에 휘말린 상태입니다. 하단의 번호로 연락해 신속히 구조를 요청하고 안전 수칙을 필히 따르십시오. 📞1717-8282-42 ▲안전 수칙▲그분과 눈을 마주치세요.▲지금 당장 ■■■만을 위한 신도가 되세요!▲교주님행복부디건강저희를사랑내세의우정구원아래지옥번죄하시고파괴더욱섬멸아름다운망각세계로구원보내과거중생을생존불우한소망삶에서기쁨구원하소서찬미위해지금바로찬양하세요! [초자연재난관리국]`;
-
-const alertText = document.getElementById("alertText");
-alertText.textContent = normalText;
-
-let loopCount = 0;
+let loopCount = 1;
 let changed = false;
 
-/* 스크롤 회차 감지 */
 alertText.addEventListener("animationiteration", () => {
   loopCount++;
-
-  // 두 번째 루프 진입 후
+  
   if (loopCount === 2 && !changed) {
-    changed = true;
-
-    // 15초 뒤 깜박이며 변질
     setTimeout(() => {
+      changed = true;
+      
+      // 즉각적인 충격 효과 시작
       alertText.classList.add("blink");
+      document.body.classList.add("corrupted-bg"); // Transition 없이 즉시 변경
 
       setTimeout(() => {
         alertText.textContent = corruptedText;
-        alertText.classList.remove("blink");
-      }, 300);
 
-    }, 15000);
+        const speedRatio = corruptedText.length / normalText.length;
+        const newDuration = 30 * speedRatio;
+        alertText.style.animationDuration = `${newDuration}s`;
+        alertText.style.animationDelay = `-${10 * speedRatio}s`;
+
+        setTimeout(() => {
+          alertText.classList.remove("blink");
+        }, 300);
+      }, 150); // 깜빡이는 아주 짧은 순간에 텍스트 교체
+    }, 15000); 
   }
 });
 </script>
