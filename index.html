@@ -1,279 +1,196 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>System Access</title>
-
-<style>
-body {
-  margin: 0;
-  height: 100vh;
-  background: #ffffff;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  overflow: hidden;
-  /* 부드러운 transition 제거 */
-}
-
-/* 오염된 배경 - 즉각적으로 변경 */
-body.corrupted-bg {
-  background-color: #0a0000;
-  /* 순간적인 색상 반전 효과로 충격 부여 */
-  filter: invert(1); 
-  animation: glitch-flash 0.2s steps(2) forwards;
-}
-
-@keyframes glitch-flash {
-  0% { filter: invert(1); }
-  50% { filter: invert(0); }
-  100% { filter: invert(0); }
-}
-
-.center {
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.status-text {
-  color: #9e9e9e;
-  font-weight: 700;
-  font-size: 18px;
-  letter-spacing: 0.6px;
-}
-
-body.corrupted-bg .status-text {
-  color: #4a0000;
-}
-
-.hidden { display: none; }
-
-/* loading */
-.loading::after {
-  content: "";
-  animation: dots 1.5s infinite;
-}
-
-@keyframes dots {
-  0% { content: ""; }
-  33% { content: "."; }
-  66% { content: ".."; }
-  100% { content: "..."; }
-}
-
-/* =========================
-   1차 팝업
-   ========================= */
-#topPopup {
-  position: fixed;
-  top: -200px;
-  left: 0;
-  width: 100%;
-  display: flex;
-  align-items: flex-start;
-  background: #111;
-  color: #fff;
-  font-size: 13px;
-  line-height: 1.6;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.35);
-  transition: top 0.4s ease;
-  z-index: 9000;
-}
-
-#topPopup.show { top: 0; }
-
-#topPopupTextWrap {
-  flex: 1;
-  padding: 14px 64px 14px 16px;
-}
-
-#topPopupText {
-  white-space: normal;
-  word-break: break-all;
-  overflow-wrap: anywhere;
-}
-
-#closeBtn {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 36px;
-  height: 36px;
-  background: none;
-  border: none;
-  color: #fff;
-  font-size: 20px;
-  cursor: pointer;
-  opacity: 0.85;
-  display: none;
-}
-
-#closeBtn.show { display: block; }
-
-/* =========================
-   2차 경고 팝업
-   ========================= */
-#emergencyPopup {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 48px;
-  background: #b00020;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-  z-index: 10000;
-  transform: translateY(-100%);
-  transition: transform 0.4s ease;
-}
-
-#emergencyPopup.show { transform: translateY(0); }
-
-.em-title {
-  flex-shrink: 0;
-  padding: 0 12px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.marquee {
-  overflow: hidden;
-  width: 100%;
-  display: flex;
-  position: relative;
-}
-
-#alertText {
-  display: inline-block;
-  white-space: nowrap;
-  padding-left: 100%;
-  will-change: transform;
-}
-
-.scroll {
-  animation: marquee 30s linear infinite;
-}
-
-@keyframes marquee {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-100%); }
-}
-
-.blink {
-  animation: blink 0.05s steps(2) infinite; /* 더 빠르게 깜빡임 */
-}
-
-@keyframes blink {
-  0% { opacity: 1; visibility: visible; }
-  50% { opacity: 0; visibility: hidden; }
-  100% { opacity: 1; visibility: visible; }
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>초자연재난관리국 종합재난통합시스템</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        body {
+            font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+            background-color: #f8fafc; /* 연한 회청색조가 도는 하얀색 베이스 */
+        }
+        /* 데이터 말소 효과 (드래그하거나 마우스 올리면 슬며시 보임) */
+        .redacted {
+            background-color: #1e293b;
+            color: #1e293b;
+            border-radius: 2px;
+            padding: 0 4px;
+            transition: all 0.3s ease;
+            cursor: help;
+        }
+        .redacted:hover {
+            background-color: transparent;
+            color: #df2020;
+        }
+    </style>
 </head>
+<body class="text-slate-800 min-h-screen p-4 md:p-8 selection:bg-blue-100 selection:text-blue-900">
 
-<body>
+    <header class="max-w-4xl mx-auto border-b-2 border-blue-800 pb-4 mb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-2">
+        <div>
+            <h1 class="text-xl md:text-2xl font-black text-blue-900 tracking-wider flex items-center gap-2">
+                <span class="inline-block w-3 h-6 bg-red-600"></span>대한민국 정부 | 초자연재난관리국
+            </h1>
+        </div>
+        <div class="text-right text-xs text-slate-500 font-mono">
+            <div>보안 등급: <span class="text-red-600 font-bold">LEVEL 3 (기밀)</span></div>
+            <div>접속 단말기: TERMINAL-A907</div>
+        </div>
+    </header>
 
-<div id="loadingScreen" class="center">
-  <div class="status-text loading">system synchronizing</div>
-</div>
+    <div class="max-w-4xl mx-auto border-l-4 border-red-600 bg-red-50 p-4 text-red-900 text-xs md:text-sm mb-6 shadow-sm rounded-r flex items-start gap-3">
+        <span class="text-xl text-red-600">⚠️</span>
+        <div class="leading-relaxed">
+            <strong>[경고]</strong> 본 문서는 초자연재난관리국 기밀 자산입니다. 인가되지 않은 인원의 무단 복제, 유포 및 열람 시 보안 규정에 따라 처벌 받을 수 있습니다.
+        </div>
+    </div>
 
-<div id="emptyScreen" class="center hidden">
-  <div class="status-text">빈화면</div>
-</div>
+    <main class="max-w-4xl mx-auto bg-white border border-slate-200 rounded-lg p-6 md:p-8 shadow-sm">
+        
+        <div class="text-xs md:text-sm text-blue-800 mb-6 bg-blue-50/70 p-3 border-l-4 border-blue-600 rounded-r flex items-center gap-2 font-medium">
+            <span>ℹ️</span>
+            <div>
+                비슷한 종류의 재난에 대해서 알아보고 싶다면 
+                <a href="#" class="text-blue-700 underline font-bold hover:text-red-600">0110PSYA.1974.파01</a> 문서로 이동하십시오.
+            </div>
+        </div>
 
-<div id="noData" class="center hidden">
-  <div class="status-text">no data found</div>
-</div>
+        <section class="border-b border-slate-200 pb-4 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm md:text-base">
+                <div><span class="text-slate-500 font-medium">등록 번호 :</span> <span class="text-slate-900 font-mono font-bold">3451PSYA.2011.마24</span></div>
+                <div><span class="text-slate-500 font-medium">재난 등급 :</span> <span class="text-red-600 font-bold bg-red-50 px-2 py-0.5 rounded border border-red-200">파형 (破刑)</span></div>
+            </div>
+        </section>
 
-<div id="topPopup">
-  <div id="topPopupTextWrap">
-    <span id="topPopupText"></span>
-  </div>
-  <button id="closeBtn">✕</button>
-</div>
+        <section class="space-y-6 text-sm md:text-base leading-relaxed">
+            <div>
+                <h3 class="text-blue-900 font-bold text-lg mb-3 flex items-center gap-2 border-b border-slate-100 pb-1">
+                    <span class="text-red-600">■</span> 개요 및 설명
+                </h3>
+                <p class="text-slate-700 pl-1">
+                    202X년대 유행한 특정 M게임의 세계 생성 코드인 SEED(시드)를 고르라는 숏츠 영상에서 타고 나간 재난으로 확인 됨. 
+                    영상에 사용된 M게임 말고도 여러 게임을 통해 이동하며 특정 게임을 기반으로 한 가상 세계를 만드는 것이 특징.
+                </p>
+            </div>
 
-<div id="emergencyPopup">
-  <div class="em-title">긴급재난알림</div>
-  <div class="marquee">
-    <span id="alertText"></span>
-  </div>
-</div>
+            <div>
+                <h3 class="text-blue-900 font-bold text-base mb-2">1. 생성 조건</h3>
+                <ul class="list-disc list-inside space-y-2 text-slate-600 pl-2">
+                    <li>짧은 시간 (1s~15s) 동안 일정 이상의 트래픽이 모일 경우 <span class="text-blue-800 font-semibold">20m 반경</span>에 있는 PC, 전자기기, 게임기 등에서 발생한다.</li>
+                    <li>PC에 다운로드 되어있는 게임 and 트래픽에 가장 가까운 물체, 생명체, <span class="redacted" title="마우스를 올리면 데이터가 노출됩니다">■■■</span> 등과 일부 혼합되어 세계가 만들어진다. 이때 게임의 바탕으로 혼합된 물체, 생명체, <span class="redacted" title="마우스를 올리면 데이터가 노출됩니다">■■■</span>을 <strong class="text-red-600 font-bold">SEED</strong> 라고 지칭한다.</li>
+                    <li>세계는 기본적으로 바탕이 된 게임과 SEED로 인해 존재하지만, 세계 제작 과정 중 부족한 데이터는 <span class="text-blue-800 font-semibold">외부(현실)</span> 에서 끌어온다.</li>
+                    <li>세계 제작 시 외부에서 끌어온 데이터 중, 형체가 소멸된 물건, 사람 등은 구축된 가상 세계 안에 내부 리소스 파일로 재생성되묘, 게임 내에서 채운 데이터의 역할에 따라 기능한다. (변환 된 데이터 종류로는 맵, 파괴 오브젝트, 인벤토리 아이템, NPC 캐릭터, 에너미 캐릭터 등이 있다.)</li>
+                </ul>
+            </div>
 
-<script>
-const alertText = document.getElementById("alertText");
-const topPopupText = document.getElementById("topPopupText");
-const loadingScreen = document.getElementById("loadingScreen");
-const emptyScreen = document.getElementById("emptyScreen");
-const noData = document.getElementById("noData");
-const topPopup = document.getElementById("topPopup");
-const closeBtn = document.getElementById("closeBtn");
-const emergencyPopup = document.getElementById("emergencyPopup");
+            <div>
+                <h3 class="text-blue-900 font-bold text-base mb-2">2. 생성 구조</h3>
+                <p class="text-slate-600 pl-2 mb-3">
+                    세계가 생성될 때, 권장 목표 수치보다 내부 데이터가 부족할 경우 전기 신호, 통신망 등을 통해 현실에 나타난다.
+                    사이트의 팝업, 메세지, 알림, 문자, 전화 등 여러가지 형태로 나타나나 그 형태는 SEED가 해당 존재를 흡수하기 수월하도록 실제와 비슷한 형태인 것으로 확인되었다.
+                </p>
+                <div class="bg-red-50 border border-red-100 p-4 rounded text-sm text-red-900 leading-relaxed shadow-sm">
+                    <strong>⚠️ 주의 사항:</strong> 외부통신망을 통해서 접속한 사람들의 경우 몸은 현실에 남으나 정신만 가상 세계로 이월 되는 것으로 보인다. 통신망을 통한 접속에서 강제로 대상자를 깨우려고 할 경우 제정신이 아니거나, 대화나 의사소통이 불가능한 상태에 들어갔다는 기록이 있으므로 각별한 주의가 필요함.
+                </div>
+            </div>
 
-const normalText = `귀하는 현재 초자연 재난에 휘말린 상태입니다. 하단의 번호로 연락해 신속히 구조를 요청하고 안전 수칙을 필히 따르십시오. 📞1717-8282-42 ▲안전 수칙▲눈을 마주치지 마세요.▲주위의 숨을 곳을 찾으세요.▲요원이 도착할 때까지 아무 소리도 내지 마세요. [초자연재난관리국]`;
+            <div>
+                <h3 class="text-blue-900 font-bold text-base mb-2">3. 진입 제한</h3>
+                <p class="text-slate-600 pl-2">
+                    세계 유지에 필요한 최소 데이터가 채워진 이후 추가 진입은 불가능. 그렇기 때문에 일정 데이터를 비우면 동일 괴담에 재진입 가능할 것이라는 가설이 있다.
+                </p>
+            </div>
+        </section>
 
-const corruptedText = `귀■는 현재 초자연 재난에 ■■린 상태입니다. 하단의 ■■로 연락해 신속히 구조를 ■■하고 신■■■을 필히 따르십시오. 📞1■17-8■■2-■2 ▲■도 ■칙▲그분과 눈을 마주치세요.▲지금 당장 ■■■만을 위한 신도가 되세요.▲■■■행복부디건강저희를사랑내세의우정구원아래지옥번죄하시고파괴더욱섬멸아름다운망각세계로구원보내과거중생을생존불우한소망삶에서기쁨구원하소서찬미위해지금바로찬양하세요! [■■연■난관■국?]`;
+        <section class="mt-8 border-t border-slate-200 pt-6">
+            <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 md:p-5">
+                <div class="border-b border-slate-200 pb-2 mb-3 text-xs md:text-sm flex justify-between items-center text-slate-500">
+                    <span class="text-blue-800 font-bold flex items-center gap-1">📋 내부 공지 사항</span>
+                    <span class="font-mono">202X년 XX월 XX일 (월) 오전 9:13</span>
+                </div>
+                
+                <div class="text-xs md:text-sm space-y-1 text-slate-600 mb-4 bg-white p-3 rounded border border-slate-100">
+                    <div><strong>보낸 사람:</strong> 초자연재난관리국 백호 1팀</div>
+                    <div><strong>받는 사람:</strong> 초자연재난관리국 현무 1팀</div>
+                    <div class="text-blue-900 mt-2 font-bold text-sm md:text-base">제목: ⭐ 요원 필수 확인 - 재난 진입 방법 변경 건</div>
+                </div>
 
-const now = new Date();
-topPopupText.innerText = `${now.toLocaleDateString("ko-KR")} (${now.toLocaleDateString("ko-KR", { weekday: "short" })}) 🚨현재 서울 인근에서 발생한 다수의 트래픽 오류로 인한 재난피해가 이어지고 있으니 근방 현장 요원들은 본부로 복귀 바랍니다. [초자연재난관리국]`;
+                <div class="text-sm space-y-3 text-slate-700 pt-1">
+                    <p>게임 종류 재난 관련 요원 진입 방법에 대한 수정사항이 추가되었습니다. 전 요원분들은 확인 부탁드립니다.</p>
+                    <div class="bg-white p-4 rounded border-l-4 border-red-600 shadow-xs space-y-2">
+                        <div class="font-bold text-red-600 text-xs uppercase tracking-wider">[수정 사항]</div>
+                        <p class="text-slate-800 font-medium">0110PSYA.1974.파01 재난에서의 출동 기록에서 정리된 진입 방법을 추가했습니다.</p>
+                        <div class="font-bold text-slate-500 mt-2 text-xs">[전제 조건]</div>
+                        <ul class="list-decimal list-inside space-y-1 text-slate-600 text-xs md:text-sm pl-1">
+                            <li>괴담의 중심이 되는 장비에 접근 가능한 상태여야 함</li>
+                            <li>관리자 권한으로 게임이 실행이 가능하거나, 편집이 가능한 상태에 있어야 함</li>
+                            <li>SEED와 세계가 충분히 안정성이 있는 상태여야 함</li>
+                        </ul>
+                    </div>
 
-alertText.textContent = normalText;
+                    <p class="text-xs md:text-sm leading-relaxed text-slate-600">
+                        해당 전제 조건이 전부 갖춰진 상태에서, 아래의 방법을 통해 진입한다.<br><br>
+                        <strong>1. 서버가 존재할 경우:</strong> 디버그 모드로 전환해 서버에 전송하는 데이터에 재진입 할 대상과 연관된 일부 파일을 집어넣는다. 이후 데이터를 서버에 전송한 이후, 처음 진입했던 매개체를 통해 한 번 더 해당 게임과 접촉한다. (접촉 방식: 메세지, 팝업, 알림, 문자, 전화 등)<br><br>
+                        <strong>2. 싱글 플레이 월드일 경우:</strong> 월드 데이터의 일부분을 삭제하거나 변경해 일부분 오류를 일으킨다. <span class="text-red-600 font-bold">(※ 주의: 데이터를 변경할 때 건물 또는 오브젝트 파일에 넣지 않도록 할 것)</span> 이후 데이터 무결성 검사를 실행한다. 무결성 검사 중 파일 업로드 실패 알림이 온다면 개발사가 서버에 저장한 초기 데이터를 다시 다운로드한다. 해당 재난을 통해 만들어진 세계라면, SEED를 중심으로 세계 생성시의 내부 데이터 수급 현상을 다시 일으킨다.
+                    </p>
+                    <p class="text-xs text-blue-700 font-medium">※ 위의 방법은 비슷한 재난 0110PSYA.1974.파01 에서 실행 가능하다는 것이 확인 된 내용임.</p>
+                </div>
+            </div>
+        </section>
 
-setTimeout(() => {
-  loadingScreen.classList.add("hidden");
-  emptyScreen.classList.remove("hidden");
-  setTimeout(() => {
-    topPopup.classList.add("show");
-    closeBtn.classList.add("show");
-  }, 3000);
-}, 2200);
+        <section class="mt-8 space-y-3">
+            <h4 class="text-sm text-slate-500 font-bold px-1">업무 논의 댓글 (4)</h4>
+            
+            <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 shadow-2xs">
+                <div class="flex justify-between text-xs text-slate-500 mb-1.5">
+                    <span class="font-bold text-blue-900 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">요원: 송화</span>
+                    <span class="font-mono">1일 전</span>
+                </div>
+                <p class="text-sm text-slate-700 leading-relaxed">
+                    재진입 방법 말이에요. 게임의 특수성으로 된 것 같기는 한데, 지난번에 뭐였지? 채팅하는 게임 있었잖아요. 개발사랑 이야기해서 거기에 신고하는 기능을 추가했는데 (그냥 진짜 버그 플레이어나 플레이 중의 문제점을 개발사에 신고?하는 기능이래요) 그걸 통해서 진입이 정말 가능하도록 기능이 만들어졌거든요. 이런 방식도 있다는 거 알아두면 좋을 거 같아요.
+                </p>
+            </div>
 
-closeBtn.addEventListener("click", () => {
-  topPopup.classList.remove("show");
-  closeBtn.classList.remove("show");
-  setTimeout(() => {
-    emptyScreen.classList.add("hidden");
-    noData.classList.remove("hidden");
-    setTimeout(() => {
-      emergencyPopup.classList.add("show");
-      setTimeout(() => { alertText.classList.add("scroll"); }, 1000);
-    }, 1000);
-  }, 2000);
-});
+            <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 shadow-2xs ml-6 md:ml-8 relative">
+                <div class="absolute top-0 left-0 bottom-0 w-1 bg-blue-600 rounded-l-lg"></div>
+                <div class="flex justify-between text-xs text-slate-500 mb-1.5">
+                    <span class="font-bold text-blue-900 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">ㄴ 요원: 정금</span>
+                    <span class="font-mono">1일 전</span>
+                </div>
+                <p class="text-sm text-slate-700 leading-relaxed">
+                    그런데 그건 너무 일부 게임만 그런 거 아닌가요? 게임이 다 그렇게 평화로운 거만 있는 거도 아니고… 거기다가 SEED는 또 다른 재난이나 이상한 거랑 합쳐져서 아예 오류 코드로 남아서 동일 시드로 아무리 검색하고 실행해도 안 들어가지는 재난도 넘쳐 나요.
+                </p>
+            </div>
 
-let loopCount = 1;
-let changed = false;
+            <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 shadow-2xs ml-6 md:ml-8 relative">
+                <div class="absolute top-0 left-0 bottom-0 w-1 bg-blue-600 rounded-l-lg"></div>
+                <div class="flex justify-between text-xs text-slate-500 mb-1.5">
+                    <span class="font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-100">ㄴ 요원: 벽운</span>
+                    <span class="font-mono">18시간 전</span>
+                </div>
+                <p class="text-sm text-slate-700 leading-relaxed">
+                    또 생겼어요 이 재난. 요새 사람들 게임도 안 하는데 어디서 이렇게 만들어지는지. 지난 8월엔 아무튼 싸우는 게임인데 생존자도 없는 거 같아서 진입 불가 판정 냈어요… 기기에서 확인되는 메인 파일 중에 정상적인게 하나도 없었대요. 진입하기 전에 파일 이름 같은거나 내부 스크립트 정상적인지 한번 보고 가세요.
+                </p>
+            </div>
 
-alertText.addEventListener("animationiteration", () => {
-  loopCount++;
-  
-  if (loopCount === 2 && !changed) {
-    setTimeout(() => {
-      changed = true;
-      
-      // 즉각적인 충격 효과 시작
-      alertText.classList.add("blink");
-      document.body.classList.add("corrupted-bg"); // Transition 없이 즉시 변경
+            <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 shadow-2xs ml-6 md:ml-8 relative">
+                <div class="absolute top-0 left-0 bottom-0 w-1 bg-blue-600 rounded-l-lg"></div>
+                <div class="flex justify-between text-xs text-slate-500 mb-1.5">
+                    <span class="font-bold text-slate-700 bg-slate-200 px-2 py-0.5 rounded">ㄴ 요원: 궁호</span>
+                    <span class="font-mono">12시간 전</span>
+                </div>
+                <p class="text-sm text-slate-700 leading-relaxed">
+                    결론적으로 게바게다. 게임 바이 게임이다… SEED가 안정적인 게임은 생존률도 구조성공률도 높지만 아닌 것들은 들어가도 요원분들도 많이 다쳐서 나와요. 밖에서 처리할 수 있는 거나 안 들어가고도 해결 되는 건 최대한 미룬다고 하네요.
+                </p>
+            </div>
+        </section>
 
-      setTimeout(() => {
-        alertText.textContent = corruptedText;
+    </main>
 
-        const speedRatio = corruptedText.length / normalText.length;
-        const newDuration = 30 * speedRatio;
-        alertText.style.animationDuration = `${newDuration}s`;
-        alertText.style.animationDelay = `-${10 * speedRatio}s`;
-
-        setTimeout(() => {
-          alertText.classList.remove("blink");
-        }, 300);
-      }, 150); // 깜빡이는 아주 짧은 순간에 텍스트 교체
-    }, 15000); 
-  }
-});
-</script>
+    <footer class="max-w-4xl mx-auto text-center text-[10px] md:text-xs text-slate-400 mt-8 border-t border-slate-200 pt-4 font-mono">
+        © 2026 대한민국 정부 초자연재난관리국. ALL RIGHTS RESERVED.
+    </footer>
 
 </body>
 </html>
